@@ -1,7 +1,7 @@
-use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
+use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::error::ErrorUnauthorized;
-use actix_web::{Error, HttpMessage, HttpRequest};
-use futures_util::future::{self, LocalBoxFuture};
+use actix_web::{Error, HttpMessage};
+use futures_util::future::LocalBoxFuture;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 
 use crate::models::jwt::Claims;
@@ -63,7 +63,7 @@ where
         let mut is_auth = false;
 
         // Validate token
-        if let Some(auth_header) =  auth_header {
+        if let Some(auth_header) = auth_header {
             if let Ok(auth_str) = auth_header.to_str() {
                 // Expecting "Bearer <token>"
                 if auth_str.starts_with("Bearer ") {
@@ -82,9 +82,8 @@ where
         }
 
         let fut = self.service.call(req);
-        
-        Box::pin(async move {
 
+        Box::pin(async move {
             if is_auth {
                 return fut.await;
             }

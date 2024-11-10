@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-use diesel::prelude::*;
 use crate::schema::staff;
 use chrono::{DateTime, Utc};
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Staff {

@@ -1,5 +1,8 @@
 use crate::models::customer_contact::{CustomerContact, NewCustomerContact, UpdateCustomerContact};
-use crate::models::reservation::{CreateOrUpdateReservationRequest, NewReservation, Reservation, ReservationWithJoin, UpdateReservation};
+use crate::models::reservation::{
+    CreateOrUpdateReservationRequest, NewReservation, Reservation, ReservationWithJoin,
+    UpdateReservation,
+};
 use crate::models::room::{Room, RoomTypes, RoomWithType};
 use crate::schema::reservations::{check_in_date, check_out_date};
 use crate::schema::{customer_contacts, reservations, room_types, rooms};
@@ -20,24 +23,22 @@ fn check_overlapping(
     let mut query = reservations::table.into_boxed();
 
     query = query
-    .filter(reservations::room_id.eq(room_id))
-    .filter(sql::<Bool>(&format!(
-        "('{new_check_in_date}' BETWEEN check_in_date AND check_out_date) OR
+        .filter(reservations::room_id.eq(room_id))
+        .filter(sql::<Bool>(&format!(
+            "('{new_check_in_date}' BETWEEN check_in_date AND check_out_date) OR
     ('{new_check_out_date}' BETWEEN check_in_date AND check_out_date) OR
     (check_in_date BETWEEN '{new_check_in_date}' AND '{new_check_out_date}') OR
     (check_out_date BETWEEN '{new_check_in_date}' AND '{new_check_out_date}')
     ",
-        new_check_in_date = new_check_in_date,
-        new_check_out_date = new_check_out_date,
-    )));
+            new_check_in_date = new_check_in_date,
+            new_check_out_date = new_check_out_date,
+        )));
 
     if let Some(id) = reservation_id {
         query = query.filter(reservations::id.ne(id));
     }
 
-    query
-        .count()
-        .get_result::<i64>(conn)
+    query.count().get_result::<i64>(conn)
 }
 
 pub fn create_reservation(
@@ -118,7 +119,9 @@ pub fn update_reservation_by_id(
     data: &CreateOrUpdateReservationRequest,
     staff_id: i32,
 ) -> Result<(), AppError> {
-    let reservation = reservations::table.filter(reservations::id.eq(reservation_id)).first::<Reservation>(conn)?;
+    let reservation = reservations::table
+        .filter(reservations::id.eq(reservation_id))
+        .first::<Reservation>(conn)?;
     let room: RoomWithType = rooms::table
         .filter(rooms::id.eq(data.room_id))
         .inner_join(room_types::table)
@@ -127,8 +130,13 @@ pub fn update_reservation_by_id(
     let now = Utc::now();
 
     // Check check in or check out date is overlapping
-    let overlapping_count =
-        check_overlapping(data.check_in_date, data.check_out_date, data.room_id, Some(reservation_id), conn)?;
+    let overlapping_count = check_overlapping(
+        data.check_in_date,
+        data.check_out_date,
+        data.room_id,
+        Some(reservation_id),
+        conn,
+    )?;
     if overlapping_count > 0 {
         return Err(AppError::BadRequest(
             "Dates overlap with an existing reservation.".to_string(),
@@ -142,7 +150,9 @@ pub fn update_reservation_by_id(
         phone_number: &data.phone_number,
         updated_at: &now,
     };
-    diesel::update(customer_contacts::table.filter(customer_contacts::id.eq(&reservation.customer_contact_id)))
+    diesel::update(
+        customer_contacts::table.filter(customer_contacts::id.eq(&reservation.customer_contact_id)),
+    )
     .set(update_customer_contact)
     .execute(conn)?;
 
@@ -176,8 +186,8 @@ pub fn update_reservation_by_id(
     }
 
     diesel::update(reservations::table.filter(reservations::id.eq(reservation_id)))
-    .set(update_reservation)
-    .execute(conn)?;
+        .set(update_reservation)
+        .execute(conn)?;
 
     Ok(())
 }
@@ -191,23 +201,38 @@ pub fn get_reservations_with_pagination(
     let total_pages = (total_items as f64 / page_size as f64).ceil() as i64;
     let offset = (page - 1) * page_size;
 
-    let results: Vec<(Reservation, Option<Room>, Option<RoomTypes>, Option<CustomerContact>)> = reservations::table
+    let results: Vec<(
+        Reservation,
+        Option<Room>,
+        Option<RoomTypes>,
+        Option<CustomerContact>,
+    )> = reservations::table
         .left_join(rooms::table.on(rooms::id.eq(reservations::room_id)))
         .left_join(room_types::table.on(room_types::id.nullable().eq(rooms::type_id.nullable())))
-        .left_join(customer_contacts::table.on(customer_contacts::id.eq(reservations::customer_contact_id)))
+        .left_join(
+            customer_contacts::table
+                .on(customer_contacts::id.eq(reservations::customer_contact_id)),
+        )
         .limit(page_size)
         .offset(offset)
-        .load::<(Reservation, Option<Room>, Option<RoomTypes>, Option<CustomerContact>)>(conn)?;
+        .load::<(
+            Reservation,
+            Option<Room>,
+            Option<RoomTypes>,
+            Option<CustomerContact>,
+        )>(conn)?;
     // let reservations_data = reservations::table.limit(page_size).offset(offset).load::<Reservation>(conn)?;
 
     let formatted_results: Vec<ReservationWithJoin> = results
         .into_iter()
-        .map(|(reservation, room, room_type, customer_contact)| ReservationWithJoin {
-            reservation,
-            room,
-            room_type,
-            customer_contact
-        })
+        .map(
+            |(reservation, room, room_type, customer_contact)| ReservationWithJoin {
+                reservation,
+                room,
+                room_type,
+                customer_contact,
+            },
+        )
         .collect();
     let pagination_meta = PaginationMeta {
         total_items,

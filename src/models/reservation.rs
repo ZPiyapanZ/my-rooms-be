@@ -1,9 +1,12 @@
-use crate::schema::{reservations};
-use chrono::{DateTime, Utc, NaiveDate};
+use crate::schema::reservations;
+use chrono::{DateTime, NaiveDate, Utc};
 use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 
-use super::{customer_contact::CustomerContact, room::{Room, RoomTypes}};
+use super::{
+    customer_contact::CustomerContact,
+    room::{Room, RoomTypes},
+};
 
 #[derive(Queryable, Serialize, Deserialize, Debug)]
 pub struct Reservation {
@@ -81,11 +84,10 @@ pub struct UpdateReservation<'a> {
     pub cancelled_at: Option<DateTime<Utc>>,
 }
 
-
 #[derive(Serialize)]
 pub struct ReservationWithJoin {
     pub reservation: Reservation,
     pub room: Option<Room>,
     pub room_type: Option<RoomTypes>,
-    pub customer_contact: Option<CustomerContact>
+    pub customer_contact: Option<CustomerContact>,
 }

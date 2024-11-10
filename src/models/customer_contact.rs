@@ -1,5 +1,5 @@
-use crate::schema::{customer_contacts};
-use chrono::{DateTime, Utc, NaiveDate};
+use crate::schema::customer_contacts;
+use chrono::{DateTime, Utc};
 use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +15,7 @@ pub struct CustomerContact {
 
 #[derive(Insertable)]
 #[table_name = "customer_contacts"]
-pub struct  NewCustomerContact<'a> {
+pub struct NewCustomerContact<'a> {
     pub full_name: &'a String,
     pub email: &'a String,
     pub phone_number: &'a String,
@@ -25,7 +25,7 @@ pub struct  NewCustomerContact<'a> {
 
 #[derive(AsChangeset)]
 #[table_name = "customer_contacts"]
-pub struct  UpdateCustomerContact<'a> {
+pub struct UpdateCustomerContact<'a> {
     pub full_name: &'a String,
     pub email: &'a String,
     pub phone_number: &'a String,
