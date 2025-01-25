@@ -76,10 +76,12 @@ pub async fn login_staff_handler(
     };
 
     match authenticate_staff(&mut conn, &req.email, &req.password) {
-        Ok(token) => HttpResponse::Ok().json(StandardResponse::success_with_data(
-            json!({ "token": token }),
-            "Success",
-        )),
+        Ok((staff_id, name, token)) => {
+            HttpResponse::Ok().json(StandardResponse::success_with_data(
+                json!({"id": staff_id, "name": name, "token": token }),
+                "Success",
+            ))
+        }
         Err(msg) => HttpResponse::Unauthorized().json(StandardResponse::<()>::error(&msg)),
     }
 }

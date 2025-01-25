@@ -62,7 +62,7 @@ pub fn authenticate_staff(
     conn: &mut PgConnection,
     email_input: &str,
     password_input: &str,
-) -> Result<String, String> {
+) -> Result<(i32, String, String), String> {
     let staff_data = staff
         .filter(email.eq(email_input))
         .first::<Staff>(conn)
@@ -71,7 +71,9 @@ pub fn authenticate_staff(
     if verify(password_input, &staff_data.password)
         .map_err(|_| "Password verification failed.".to_string())?
     {
-        generate_jwt(staff_data.id)
+        let jwt = generate_jwt(staff_data.id)?;
+
+        Ok((staff_data.id, staff_data.name, jwt))
     } else {
         Err("Invalid email or password.".to_string())
     }

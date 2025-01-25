@@ -4,7 +4,6 @@ use crate::models::reservation::{
     UpdateReservation,
 };
 use crate::models::room::{Room, RoomTypes, RoomWithType};
-use crate::schema::reservations::{check_in_date, check_out_date};
 use crate::schema::{customer_contacts, reservations, room_types, rooms};
 use crate::utils::common::AppError;
 use crate::utils::response::PaginationMeta;
@@ -22,6 +21,7 @@ fn check_overlapping(
 ) -> Result<i64, diesel::result::Error> {
     let mut query = reservations::table.into_boxed();
 
+    // TODO: Changed logic because SQL Injection
     query = query
         .filter(reservations::room_id.eq(room_id))
         .filter(sql::<Bool>(&format!(

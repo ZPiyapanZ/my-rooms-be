@@ -1,16 +1,15 @@
 mod config;
 mod handlers;
+mod middlewares;
 mod models;
 mod routes;
-mod services;
 mod schema;
+mod services;
 mod utils;
-mod middlewares;
 
-use actix_web::{App, HttpServer, web};
+use actix_web::{web, App, HttpServer};
 use config::database::create_connection;
 use dotenv::dotenv;
-use std::env;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
